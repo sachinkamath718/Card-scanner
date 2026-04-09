@@ -1,27 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --bg-primary: #0a0a0f;
-  --bg-secondary: #111118;
-  --bg-card: #16161f;
-  --bg-card-hover: #1e1e2a;
-  --border: #2a2a3a;
-  --border-light: #3a3a4a;
+  --bg-primary: #f5f6fa;
+  --bg-secondary: #eceef5;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f1f8;
+  --border: #dde0ed;
+  --border-light: #c8ccdf;
   --accent: #6c63ff;
-  --accent-glow: rgba(108, 99, 255, 0.4);
-  --accent-light: #8b84ff;
+  --accent-glow: rgba(108, 99, 255, 0.2);
+  --accent-light: #5046e5;
   --accent-dark: #4a43cc;
-  --success: #22c55e;
-  --success-glow: rgba(34, 197, 94, 0.2);
-  --danger: #ef4444;
-  --danger-glow: rgba(239, 68, 68, 0.2);
-  --warning: #f59e0b;
-  --text-primary: #f1f1ff;
-  --text-secondary: #9898b8;
-  --text-muted: #5a5a7a;
-  --gradient-hero: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-  --shadow-glow: 0 0 40px rgba(108, 99, 255, 0.15);
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --success: #16a34a;
+  --success-glow: rgba(22, 163, 74, 0.15);
+  --danger: #dc2626;
+  --danger-glow: rgba(220, 38, 38, 0.15);
+  --warning: #d97706;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #9ca3af;
+  --gradient-hero: linear-gradient(135deg, #ede9fe 0%, #e0e7ff 50%, #dbeafe 100%);
+  --shadow-glow: 0 0 40px rgba(108, 99, 255, 0.12);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.08);
   --radius: 16px;
   --radius-sm: 10px;
   --radius-lg: 24px;
@@ -53,7 +53,7 @@ html, body {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(10, 10, 15, 0.8);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
   padding: 16px 0;
@@ -87,7 +87,7 @@ html, body {
 .navbar-title {
   font-size: 20px;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--text-primary), var(--accent-light));
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -124,7 +124,7 @@ html, body {
   letter-spacing: -1.5px;
   line-height: 1.1;
   margin-bottom: 20px;
-  background: linear-gradient(135deg, #fff 0%, var(--accent-light) 50%, #a78bfa 100%);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 60%, #7c3aed 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -325,7 +325,7 @@ html, body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(17, 24, 39, 0.4);
   backdrop-filter: blur(8px);
   z-index: 200;
   display: flex;
@@ -342,7 +342,7 @@ html, body {
   padding: 32px;
   width: 100%;
   max-width: 480px;
-  box-shadow: var(--shadow-glow), 0 25px 60px rgba(0,0,0,0.5);
+  box-shadow: var(--shadow-glow), 0 25px 60px rgba(0,0,0,0.12);
   animation: slideUp 0.3s ease;
 }
 
@@ -749,15 +749,15 @@ html, body {
 .spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(255,255,255,0.2);
-  border-top-color: white;
+  border: 2px solid rgba(108, 99, 255, 0.2);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   display: inline-block;
 }
 
 .skeleton {
-  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+  background: linear-gradient(90deg, #eceef5 25%, #e2e4f0 50%, #eceef5 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 8px;
