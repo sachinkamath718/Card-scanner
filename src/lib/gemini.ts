@@ -12,7 +12,7 @@ export interface ExtractedContact {
 }
 
 export async function extractBusinessCardData(base64Image: string, mimeType: string): Promise<ExtractedContact> {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     const prompt = `You are an expert at reading business cards. 
 Extract the following information from this business card image and return ONLY a valid JSON object with these exact keys:
