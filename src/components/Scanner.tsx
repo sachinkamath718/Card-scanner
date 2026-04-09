@@ -105,7 +105,7 @@ export default function Scanner({ onExtracted }: ScannerProps) {
 
     return (
         <div className="scanner-section">
-            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>📇 Scan a Business Card</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Scan a Business Card</h2>
             <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 24 }}>
                 Use your camera or upload an image — AI will extract all contact details instantly.
             </p>
@@ -116,14 +116,16 @@ export default function Scanner({ onExtracted }: ScannerProps) {
                     onClick={() => { setTab('camera'); resetScan(); }}
                     id="tab-camera"
                 >
-                    📷 Camera
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    Camera
                 </button>
                 <button
                     className={`scanner-tab ${tab === 'upload' ? 'active' : ''}`}
                     onClick={() => { setTab('upload'); resetScan(); stopCamera(); }}
                     id="tab-upload"
                 >
-                    📁 Upload
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Upload
                 </button>
             </div>
 
@@ -138,7 +140,9 @@ export default function Scanner({ onExtracted }: ScannerProps) {
                 <div>
                     {!cameraActive && !preview && (
                         <div style={{ textAlign: 'center', padding: '48px 0' }}>
-                            <div style={{ fontSize: 64, marginBottom: 20 }}>📷</div>
+                            <div style={{ fontSize: 48, marginBottom: 20, color: 'var(--text-muted)' }}>
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            </div>
                             <p style={{ color: 'var(--text-secondary)', marginBottom: 24, fontSize: 15 }}>
                                 Position the business card in view and capture
                             </p>
@@ -194,7 +198,9 @@ export default function Scanner({ onExtracted }: ScannerProps) {
                             onDrop={handleDrop}
                             id="upload-area"
                         >
-                            <span className="upload-icon">🖼️</span>
+                            <span className="upload-icon">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            </span>
                             <div className="upload-title">Drop your card image here</div>
                             <div className="upload-subtitle">or click to browse · Supports JPG, PNG, WEBP, HEIC</div>
                             <input

@@ -40,7 +40,7 @@ export default function CreateEventModal({ onClose, onCreated }: CreateEventModa
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
             <div className="modal">
                 <div className="modal-title">
-                    <span>🎪</span> Create New Event
+                    Create New Event
                 </div>
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
@@ -73,12 +73,12 @@ export default function CreateEventModal({ onClose, onCreated }: CreateEventModa
                         />
                     </div>
                     {error && (
-                        <div style={{ color: 'var(--danger)', fontSize: 13, marginBottom: 12 }}>⚠️ {error}</div>
+                        <div style={{ color: 'var(--danger)', fontSize: 13, marginBottom: 12 }}>{error}</div>
                     )}
                     <div className="modal-actions">
                         <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
                         <button type="submit" className="btn btn-primary" disabled={loading}>
-                            {loading ? <><span className="spinner" /> Creating...</> : '✓ Create Event'}
+                            {loading ? <><span className="spinner" /> Creating...</> : 'Create Event'}
                         </button>
                     </div>
                 </form>

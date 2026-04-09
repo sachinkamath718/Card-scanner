@@ -46,7 +46,9 @@ export default function ContactForm({ extracted, imageBase64, eventId, onSaved, 
     return (
         <div className="contact-form-card">
             <div className="contact-form-header">
-                <div className="contact-form-icon">✅</div>
+                <div className="contact-form-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
                 <div>
                     <h3 style={{ fontSize: 18, fontWeight: 700 }}>Card Scanned!</h3>
                     <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
@@ -89,7 +91,7 @@ export default function ContactForm({ extracted, imageBase64, eventId, onSaved, 
 
             <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
                 <button className="btn btn-primary" onClick={handleSave} disabled={saving} id="btn-save-contact">
-                    {saving ? <><span className="spinner" /> Saving...</> : '💾 Save Contact'}
+                    {saving ? <><span className="spinner" /> Saving...</> : 'Save Contact'}
                 </button>
                 <button className="btn btn-ghost" onClick={onDiscard} id="btn-discard-contact">
                     Discard

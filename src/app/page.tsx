@@ -33,7 +33,7 @@ export default function HomePage() {
       <div className="hero">
         <div className="container">
           <div className="hero-badge">
-            <span>✨</span> AI-powered with Gemini Vision
+            AI-powered with Gemini Vision
           </div>
           <h1 className="hero-title">
             Scan Cards.<br />Never Miss a Lead.
@@ -46,7 +46,7 @@ export default function HomePage() {
             onClick={() => setShowModal(true)}
             id="btn-create-event-hero"
           >
-            🎪 Create Your First Event
+            Create Your First Event
           </button>
         </div>
       </div>
@@ -74,7 +74,12 @@ export default function HomePage() {
           </div>
         ) : events.length === 0 ? (
           <div className="empty-state">
-            <span className="empty-icon">🎪</span>
+            <div className="empty-icon-box">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="2" />
+                <line x1="2" y1="10" x2="22" y2="10" />
+              </svg>
+            </div>
             <div className="empty-title">No events yet</div>
             <div className="empty-desc">Create your first event to start scanning business cards</div>
             <br />
@@ -87,23 +92,31 @@ export default function HomePage() {
             {events.map(event => (
               <a key={event.id} href={`/events/${event.id}`} className="card card-clickable" style={{ textDecoration: 'none' }}>
                 <div className="event-card-inner">
-                  <div className="event-icon">🎪</div>
+                  <div className="event-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                  </div>
                   <div className="event-name">{event.name}</div>
                   <div className="event-meta">
                     {event.date && (
                       <div className="event-meta-item">
-                        <span>📅</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         {new Date(event.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </div>
                     )}
                     {event.location && (
                       <div className="event-meta-item">
-                        <span>📍</span> {event.location}
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        {event.location}
                       </div>
                     )}
                   </div>
                   <div className="event-contacts-count">
-                    <span>👥</span> View Contacts →
+                    View Contacts →
                   </div>
                 </div>
               </a>
