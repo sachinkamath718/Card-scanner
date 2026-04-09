@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { ExtractedContact } from '@/lib/gemini';
 
@@ -19,13 +19,21 @@ export default function Scanner({ onExtracted }: ScannerProps) {
     const streamRef = useRef<MediaStream | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Assign stream to video element after it renders in the DOM
+    useEffect(() => {
+        if (cameraActive && videoRef.current && streamRef.current) {
+            videoRef.current.srcObject = streamRef.current;
+        }
+    }, [cameraActive]);
+
     const startCamera = useCallback(async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } },
             });
             streamRef.current = stream;
-            if (videoRef.current) videoRef.current.srcObject = stream;
+            // Set cameraActive=true FIRST so the <video> renders,
+            // then the useEffect above assigns srcObject once the element exists
             setCameraActive(true);
         } catch {
             toast.error('Unable to access camera. Please allow camera permission or use file upload.');
