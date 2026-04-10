@@ -16,7 +16,8 @@ export default function EventDetailPage() {
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [loadingContacts, setLoadingContacts] = useState(true);
     const [extracted, setExtracted] = useState<ExtractedContact | null>(null);
-    const [imageBase64, setImageBase64] = useState('');
+    const [frontImageBase64, setFrontImageBase64] = useState('');
+    const [backImageBase64, setBackImageBase64] = useState<string | null>(null);
 
     useEffect(() => {
         fetchEvent();
@@ -43,20 +44,27 @@ export default function EventDetailPage() {
         }
     }, [eventId]);
 
-    function handleExtracted(data: ExtractedContact, imgBase64: string) {
+    function handleExtracted(data: ExtractedContact, frontBase64: string, backBase64: string | null) {
         setExtracted(data);
-        setImageBase64(imgBase64);
+        setFrontImageBase64(frontBase64);
+        setBackImageBase64(backBase64);
     }
 
     function handleSaved() {
         setExtracted(null);
-        setImageBase64('');
+        setFrontImageBase64('');
+        setBackImageBase64(null);
         fetchContacts();
     }
 
     function handleDiscard() {
         setExtracted(null);
-        setImageBase64('');
+        setFrontImageBase64('');
+        setBackImageBase64(null);
+    }
+
+    function handleContactDeleted(id: string) {
+        setContacts(prev => prev.filter(c => c.id !== id));
     }
 
     return (
@@ -70,8 +78,8 @@ export default function EventDetailPage() {
                     <div className="page-title-group">
                         <h1>{event?.name || 'Loading...'}</h1>
                         <p>
-                            {event?.date && <><svg style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> {new Date(event.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</>}
-                            {event?.location && <><span style={{ marginLeft: 16 }}><svg style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>{event.location}</span></>}
+                            {event?.date && <><svg style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> {new Date(event.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</>}
+                            {event?.location && <><span style={{ marginLeft: 16 }}><svg style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>{event.location}</span></>}
                         </p>
                     </div>
                     <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
@@ -88,7 +96,8 @@ export default function EventDetailPage() {
                 {extracted && (
                     <ContactForm
                         extracted={extracted}
-                        imageBase64={imageBase64}
+                        frontImageBase64={frontImageBase64}
+                        backImageBase64={backImageBase64}
                         eventId={eventId}
                         onSaved={handleSaved}
                         onDiscard={handleDiscard}
@@ -106,7 +115,7 @@ export default function EventDetailPage() {
                             ↻ Refresh
                         </button>
                     </div>
-                    <ContactsTable contacts={contacts} loading={loadingContacts} />
+                    <ContactsTable contacts={contacts} loading={loadingContacts} onDeleted={handleContactDeleted} />
                 </div>
             </div>
         </main>

@@ -3,16 +3,20 @@ import { extractBusinessCardData } from '@/lib/gemini';
 
 export const dynamic = 'force-dynamic';
 
-
 export async function POST(req: NextRequest) {
     try {
-        const { image, mimeType } = await req.json();
+        const { image, mimeType, backImage, backMimeType } = await req.json();
 
         if (!image) {
             return NextResponse.json({ error: 'No image provided' }, { status: 400 });
         }
 
-        const extracted = await extractBusinessCardData(image, mimeType || 'image/jpeg');
+        const extracted = await extractBusinessCardData(
+            image,
+            mimeType || 'image/jpeg',
+            backImage || undefined,
+            backMimeType || 'image/jpeg',
+        );
 
         return NextResponse.json({ data: extracted });
     } catch (error: unknown) {

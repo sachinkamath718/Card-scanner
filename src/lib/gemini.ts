@@ -11,10 +11,31 @@ export interface ExtractedContact {
     phone_number: string;
 }
 
-export async function extractBusinessCardData(base64Image: string, mimeType: string): Promise<ExtractedContact> {
+export async function extractBusinessCardData(
+    base64Image: string,
+    mimeType: string,
+    backBase64?: string,
+    backMimeType?: string,
+): Promise<ExtractedContact> {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    const prompt = `You are an expert at reading business cards. 
+    const hasBothSides = !!backBase64;
+
+    const prompt = hasBothSides
+        ? `You are an expert at reading business cards.
+You are given TWO images: the FRONT and BACK of the same business card.
+Combine the information from BOTH sides and extract the following fields, returning ONLY a valid JSON object:
+{
+  "first_name": "",
+  "last_name": "",
+  "company_name": "",
+  "job_title": "",
+  "email": "",
+  "phone_number": ""
+}
+If any field is not found on either side, leave the value as an empty string.
+Do NOT include any explanation, markdown, or extra text. Return ONLY the JSON object.`
+        : `You are an expert at reading business cards.
 Extract the following information from this business card image and return ONLY a valid JSON object with these exact keys:
 {
   "first_name": "",
@@ -24,10 +45,10 @@ Extract the following information from this business card image and return ONLY 
   "email": "",
   "phone_number": ""
 }
-If any field is not found on the card, leave the value as an empty string. 
+If any field is not found on the card, leave the value as an empty string.
 Do NOT include any explanation, markdown, or extra text. Return ONLY the JSON object.`;
 
-    const result = await model.generateContent([
+    const parts: Parameters<typeof model.generateContent>[0] = [
         prompt,
         {
             inlineData: {
@@ -35,7 +56,18 @@ Do NOT include any explanation, markdown, or extra text. Return ONLY the JSON ob
                 data: base64Image,
             },
         },
-    ]);
+    ];
+
+    if (hasBothSides && backBase64) {
+        parts.push({
+            inlineData: {
+                mimeType: backMimeType || 'image/jpeg',
+                data: backBase64,
+            },
+        });
+    }
+
+    const result = await model.generateContent(parts);
 
     const text = result.response.text().trim();
 

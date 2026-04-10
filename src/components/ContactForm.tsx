@@ -6,14 +6,16 @@ import { ExtractedContact } from '@/lib/gemini';
 
 interface ContactFormProps {
     extracted: ExtractedContact;
-    imageBase64: string;
+    frontImageBase64: string;
+    backImageBase64: string | null;
     eventId: string;
     onSaved: () => void;
     onDiscard: () => void;
 }
 
-export default function ContactForm({ extracted, imageBase64, eventId, onSaved, onDiscard }: ContactFormProps) {
+export default function ContactForm({ extracted, frontImageBase64, backImageBase64, eventId, onSaved, onDiscard }: ContactFormProps) {
     const [form, setForm] = useState<ExtractedContact>({ ...extracted });
+    const [discussionDetails, setDiscussionDetails] = useState('');
     const [saving, setSaving] = useState(false);
 
     function update(field: keyof ExtractedContact, value: string) {
@@ -29,7 +31,9 @@ export default function ContactForm({ extracted, imageBase64, eventId, onSaved, 
                 body: JSON.stringify({
                     event_id: eventId,
                     ...form,
-                    raw_image_url: `data:image/jpeg;base64,${imageBase64}`,
+                    raw_image_url: `data:image/jpeg;base64,${frontImageBase64}`,
+                    back_image_url: backImageBase64 ? `data:image/jpeg;base64,${backImageBase64}` : null,
+                    discussion_details: discussionDetails.trim() || null,
                 }),
             });
             const json = await res.json();
@@ -47,12 +51,13 @@ export default function ContactForm({ extracted, imageBase64, eventId, onSaved, 
         <div className="contact-form-card">
             <div className="contact-form-header">
                 <div className="contact-form-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                 </div>
                 <div>
                     <h3 style={{ fontSize: 18, fontWeight: 700 }}>Card Scanned!</h3>
                     <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                         Review and edit the extracted details below, then save.
+                        {backImageBase64 && <span className="badge badge-purple" style={{ marginLeft: 8, fontSize: 11 }}>Front + Back</span>}
                     </p>
                 </div>
             </div>
@@ -87,6 +92,26 @@ export default function ContactForm({ extracted, imageBase64, eventId, onSaved, 
                     <label className="form-label">Phone Number</label>
                     <input className="form-input" type="tel" value={form.phone_number} onChange={e => update('phone_number', e.target.value)} placeholder="+91 9876543210" id="field-phone" />
                 </div>
+            </div>
+
+            {/* Discussion Details */}
+            <div className="discussion-section">
+                <div className="discussion-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
+                    Discussion Details
+                    <span className="discussion-optional">optional</span>
+                </div>
+                <textarea
+                    className="form-input discussion-textarea"
+                    id="field-discussion"
+                    placeholder="What did you discuss? Topics, interests, next steps, follow-up actions…"
+                    value={discussionDetails}
+                    onChange={e => setDiscussionDetails(e.target.value)}
+                    rows={4}
+                />
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                    This will be used to generate a personalised follow-up email.
+                </p>
             </div>
 
             <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
