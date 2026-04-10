@@ -53,13 +53,13 @@ export default function HomePage() {
       <div className="hero">
         <div className="container">
           <div className="hero-badge">
-            AI-powered with Gemini Vision
+            Smart Business Card Management
           </div>
           <h1 className="hero-title">
             Scan Cards.<br />Never Miss a Lead.
           </h1>
           <p className="hero-desc">
-            Scan any business card at any event. AI extracts the details instantly. Everything syncs to your database — ready to use.
+            Capture, manage and organise business cards from every event. Scan cards, QR codes, or upload images — contact details are extracted instantly and synced to your database.
           </p>
           <button
             className="btn btn-primary btn-lg"

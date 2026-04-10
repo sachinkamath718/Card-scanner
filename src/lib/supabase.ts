@@ -41,5 +41,7 @@ export type Contact = {
   raw_image_url: string | null;
   back_image_url: string | null;
   discussion_details: string | null;
+  additional_emails: string | null;
+  additional_phones: string | null;
   scanned_at: string;
 };

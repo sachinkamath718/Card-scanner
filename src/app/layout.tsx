@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
-  title: 'CardScan — AI Business Card Scanner',
-  description: 'Scan business cards at events, extract contact info with AI, and save everything to your database.',
+  title: 'CardScan — Smart Business Card Scanner',
+  description: 'Scan and manage business cards at events. Capture contact details instantly and sync everything to your database.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
               <div>
                 <div className="navbar-title">CardScan</div>
-                <div className="navbar-subtitle">AI-Powered Business Cards</div>
+                <div className="navbar-subtitle">Smart Business Card Scanner</div>
               </div>
             </a>
           </div>

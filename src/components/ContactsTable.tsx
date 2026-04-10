@@ -20,6 +20,22 @@ function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+function renderMultiValues(primary: string | null, additional: string | null, isEmail = false) {
+    const all = [primary, ...(additional ? additional.split(',') : [])].filter(Boolean) as string[];
+    if (!all.length) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {all.map((val, i) => (
+                isEmail ? (
+                    <a key={i} href={`mailto:${val}`} className="contact-email-link" style={{ fontSize: i === 0 ? 14 : 12, opacity: i === 0 ? 1 : 0.75 }}>{val}</a>
+                ) : (
+                    <span key={i} style={{ fontSize: i === 0 ? 14 : 12, opacity: i === 0 ? 1 : 0.75 }}>{val}</span>
+                )
+            ))}
+        </div>
+    );
+}
+
 export default function ContactsTable({ contacts, loading, onDeleted }: ContactsTableProps) {
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -59,7 +75,7 @@ export default function ContactsTable({ contacts, loading, onDeleted }: Contacts
                     </svg>
                 </div>
                 <div className="empty-title">No contacts yet</div>
-                <div className="empty-desc">Scan your first business card above to get started</div>
+                <div className="empty-desc">Capture your first business card above to get started</div>
             </div>
         );
     }
@@ -91,12 +107,8 @@ export default function ContactsTable({ contacts, loading, onDeleted }: Contacts
                                 </td>
                                 <td>{contact.company_name || ''}</td>
                                 <td>{contact.job_title || ''}</td>
-                                <td>
-                                    {contact.email ? (
-                                        <a href={`mailto:${contact.email}`} className="contact-email-link">{contact.email}</a>
-                                    ) : ''}
-                                </td>
-                                <td>{contact.phone_number || ''}</td>
+                                <td>{renderMultiValues(contact.email, contact.additional_emails, true)}</td>
+                                <td>{renderMultiValues(contact.phone_number, contact.additional_phones, false)}</td>
                                 <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>{formatDate(contact.scanned_at)}</td>
                                 <td>
                                     <button

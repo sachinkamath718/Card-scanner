@@ -9,6 +9,8 @@ export interface ExtractedContact {
     job_title: string;
     email: string;
     phone_number: string;
+    additional_emails: string[];
+    additional_phones: string[];
 }
 
 export async function extractBusinessCardData(
@@ -24,56 +26,58 @@ export async function extractBusinessCardData(
     const prompt = hasBothSides
         ? `You are an expert at reading business cards.
 You are given TWO images: the FRONT and BACK of the same business card.
-Combine the information from BOTH sides and extract the following fields, returning ONLY a valid JSON object:
+Combine the information from BOTH sides. Extract ALL phone numbers and ALL email addresses found.
+Return ONLY a valid JSON object with these exact keys:
 {
   "first_name": "",
   "last_name": "",
   "company_name": "",
   "job_title": "",
   "email": "",
-  "phone_number": ""
+  "phone_number": "",
+  "additional_emails": [],
+  "additional_phones": []
 }
-If any field is not found on either side, leave the value as an empty string.
+- "email" and "phone_number" should be the primary/first ones found.
+- "additional_emails" and "additional_phones" are arrays of any remaining ones (can be empty arrays []).
+- If any field is not found, use empty string or empty array.
 Do NOT include any explanation, markdown, or extra text. Return ONLY the JSON object.`
         : `You are an expert at reading business cards.
-Extract the following information from this business card image and return ONLY a valid JSON object with these exact keys:
+Extract ALL contact information from this business card image. Capture ALL phone numbers and ALL email addresses.
+Return ONLY a valid JSON object with these exact keys:
 {
   "first_name": "",
   "last_name": "",
   "company_name": "",
   "job_title": "",
   "email": "",
-  "phone_number": ""
+  "phone_number": "",
+  "additional_emails": [],
+  "additional_phones": []
 }
-If any field is not found on the card, leave the value as an empty string.
+- "email" and "phone_number" should be the primary/first ones found.
+- "additional_emails" and "additional_phones" are arrays of any remaining ones (can be empty arrays []).
+- If any field is not found, use empty string or empty array.
 Do NOT include any explanation, markdown, or extra text. Return ONLY the JSON object.`;
 
     const parts: Parameters<typeof model.generateContent>[0] = [
         prompt,
-        {
-            inlineData: {
-                mimeType: mimeType,
-                data: base64Image,
-            },
-        },
+        { inlineData: { mimeType, data: base64Image } },
     ];
 
     if (hasBothSides && backBase64) {
-        parts.push({
-            inlineData: {
-                mimeType: backMimeType || 'image/jpeg',
-                data: backBase64,
-            },
-        });
+        parts.push({ inlineData: { mimeType: backMimeType || 'image/jpeg', data: backBase64 } });
     }
 
     const result = await model.generateContent(parts);
-
     const text = result.response.text().trim();
-
-    // Strip markdown code fences if present
     const jsonText = text.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
-
     const parsed = JSON.parse(jsonText);
-    return parsed as ExtractedContact;
+
+    // Ensure arrays exist even if model omits them
+    return {
+        ...parsed,
+        additional_emails: Array.isArray(parsed.additional_emails) ? parsed.additional_emails : [],
+        additional_phones: Array.isArray(parsed.additional_phones) ? parsed.additional_phones : [],
+    } as ExtractedContact;
 }
