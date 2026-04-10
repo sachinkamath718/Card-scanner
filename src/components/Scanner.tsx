@@ -406,29 +406,8 @@ export default function Scanner({ onExtracted }: ScannerProps) {
                 </div>
             )}
 
-            {/* QR tab always shows its own UI regardless of step */}
-            {tab === 'qr' && (
-                <>
-                    <div className="scanner-tabs">
-                        <button className="scanner-tab" onClick={() => switchTab('camera')} id="tab-camera-from-qr">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /><circle cx="12" cy="13" r="4" /></svg>
-                            Camera
-                        </button>
-                        <button className="scanner-tab" onClick={() => switchTab('upload')} id="tab-upload-from-qr">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
-                            Upload
-                        </button>
-                        <button className="scanner-tab active" id="tab-qr-active">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" />
-                                <rect x="5" y="5" width="3" height="3" fill="currentColor" /><rect x="16" y="5" width="3" height="3" fill="currentColor" /><rect x="5" y="16" width="3" height="3" fill="currentColor" />
-                            </svg>
-                            QR Code
-                        </button>
-                    </div>
-                    {renderQR()}
-                </>
-            )}
+            {/* QR tab content */}
+            {tab === 'qr' && renderQR()}
 
             {processing && (
                 <div className="processing-bar">
