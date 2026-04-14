@@ -27,7 +27,6 @@ export default function Scanner({ onExtracted }: ScannerProps) {
     const [dragOver, setDragOver] = useState(false);
     const [qrResult, setQrResult] = useState<string | null>(null);
     const [qrScanning, setQrScanning] = useState(false);
-    const [qrFetching, setQrFetching] = useState(false);
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const qrVideoRef = useRef<HTMLVideoElement>(null);
@@ -138,37 +137,19 @@ export default function Scanner({ onExtracted }: ScannerProps) {
         };
     }, [qrActive, qrScanning, stopQR]);
 
-    async function handleQRDetected(data: string) {
+    function handleQRDetected(data: string) {
         const result = parseQRCode(data);
         setQrResult(data);
 
         if (result.type === 'url') {
-            // Fetch the URL and extract contact info from the page
-            setQrFetching(true);
-            try {
-                const res = await fetch('/api/fetch-url', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: data }),
-                });
-                const json = await res.json();
-                if (!res.ok) throw new Error(json.error);
-                toast.success('Contact details extracted from the page!');
-                onExtracted(json.data, '', null);
-            } catch (err: unknown) {
-                toast.error(err instanceof Error ? err.message : 'Could not fetch the URL');
-                // Still open the form with empty fields so user can fill manually
-                onExtracted(result.contact as ExtractedContact, '', null);
-            } finally {
-                setQrFetching(false);
-            }
+            toast('QR contains a URL — review and fill in contact details manually.', { icon: '🔗' });
         } else if (result.type === 'vcard') {
             toast.success('vCard QR code detected! Contact details extracted.');
-            onExtracted(result.contact as ExtractedContact, '', null);
         } else {
-            toast('QR code read. Please fill in any missing details.', { icon: '📋' });
-            onExtracted(result.contact as ExtractedContact, '', null);
+            toast('QR code read. Some details may need to be filled in manually.', { icon: '📋' });
         }
+
+        onExtracted(result.contact as ExtractedContact, '', null);
     }
 
     // ── Card capture ──────────────────────────────────────────────────
@@ -288,19 +269,36 @@ export default function Scanner({ onExtracted }: ScannerProps) {
                         <button className="btn btn-primary btn-lg" onClick={() => { setStep(side === 'front' ? 'scanning-front' : 'scanning-back'); startCamera(); }} id={`btn-start-camera-${side}`}>Start Camera</button>
                     </div>
                 )}
+
+                {/* ── Full-screen camera overlay ── */}
                 {cameraActive && (
-                    <>
-                        <div className="camera-container">
-                            <video ref={videoRef} autoPlay playsInline muted className="camera-video" />
-                            <div className="camera-guide" />
-                            <div className="camera-overlay">
-                                <button className="capture-btn" onClick={capturePhoto} id={`btn-capture-${side}`} aria-label="Capture"><div className="capture-btn-inner" /></button>
-                            </div>
+                    <div className="camera-fullscreen">
+                        <video ref={videoRef} autoPlay playsInline muted className="camera-fullscreen-video" />
+
+                        {/* Top bar */}
+                        <div className="camera-fullscreen-top">
+                            <span className="camera-fullscreen-label">
+                                {side === 'front' ? '📷 Front of card' : '📷 Back of card'}
+                            </span>
+                            <button className="camera-fullscreen-close" onClick={stopCamera} aria-label="Cancel">✕</button>
                         </div>
-                        <div style={{ textAlign: 'center', marginTop: 16 }}>
-                            <button className="btn btn-ghost btn-sm" onClick={stopCamera}>✕ Cancel</button>
+
+                        {/* Card guide */}
+                        <div className="camera-fullscreen-guide">
+                            <div className="cfs-corner cfs-tl" />
+                            <div className="cfs-corner cfs-tr" />
+                            <div className="cfs-corner cfs-bl" />
+                            <div className="cfs-corner cfs-br" />
                         </div>
-                    </>
+
+                        {/* Bottom — capture */}
+                        <div className="camera-fullscreen-bottom">
+                            <p className="camera-fullscreen-hint">Hold card flat &amp; tap to capture</p>
+                            <button className="capture-btn" onClick={capturePhoto} id={`btn-capture-${side}`} aria-label="Capture">
+                                <div className="capture-btn-inner" />
+                            </button>
+                        </div>
+                    </div>
                 )}
             </div>
         );
@@ -330,28 +328,14 @@ export default function Scanner({ onExtracted }: ScannerProps) {
     // ── QR Code view ──────────────────────────────────────────────────
     function renderQR() {
         if (qrResult) {
-            const isUrl = /^https?:\/\//i.test(qrResult);
             return (
                 <div className="qr-result-card">
-                    <div className={`qr-result-icon ${qrFetching ? '' : ''}`}>
-                        {qrFetching ? (
-                            <span className="spinner" style={{ width: 18, height: 18, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)', borderTopColor: 'white' }} />
-                        ) : (
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                        )}
+                    <div className="qr-result-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                     </div>
                     <div>
-                        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
-                            {qrFetching ? 'Fetching contact details…' : 'QR Code Scanned'}
-                        </div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)', wordBreak: 'break-all', maxWidth: 320 }}>
-                            {qrFetching
-                                ? `Reading page at ${qrResult.length > 60 ? qrResult.slice(0, 60) + '…' : qrResult}`
-                                : isUrl
-                                    ? `URL: ${qrResult.length > 80 ? qrResult.slice(0, 80) + '…' : qrResult}`
-                                    : qrResult.length > 120 ? qrResult.slice(0, 120) + '…' : qrResult
-                            }
-                        </div>
+                        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>QR Code Scanned</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', wordBreak: 'break-all', maxWidth: 320 }}>{qrResult.length > 120 ? qrResult.slice(0, 120) + '…' : qrResult}</div>
                     </div>
                 </div>
             );
@@ -373,23 +357,30 @@ export default function Scanner({ onExtracted }: ScannerProps) {
                         <button className="btn btn-primary btn-lg" onClick={startQRScanner} id="btn-start-qr">Start QR Scanner</button>
                     </div>
                 )}
+
+                {/* ── Full-screen QR overlay ── */}
                 {qrActive && (
-                    <>
-                        <div className="camera-container qr-container">
-                            <video ref={qrVideoRef} autoPlay playsInline muted className="camera-video" />
-                            <div className="qr-guide">
-                                <div className="qr-guide-corner qr-tl" />
-                                <div className="qr-guide-corner qr-tr" />
-                                <div className="qr-guide-corner qr-bl" />
-                                <div className="qr-guide-corner qr-br" />
-                                <div className="qr-scan-line" />
-                            </div>
+                    <div className="camera-fullscreen">
+                        <video ref={qrVideoRef} autoPlay playsInline muted className="camera-fullscreen-video" />
+
+                        <div className="camera-fullscreen-top">
+                            <span className="camera-fullscreen-label">🔲 QR Code Scanner</span>
+                            <button className="camera-fullscreen-close" onClick={stopQR} aria-label="Cancel">✕</button>
                         </div>
-                        <div style={{ textAlign: 'center', marginTop: 16 }}>
-                            <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 12 }}>Hold a QR code steady in the frame…</p>
-                            <button className="btn btn-ghost btn-sm" onClick={stopQR}>✕ Cancel</button>
+
+                        {/* QR guide corners */}
+                        <div className="camera-fullscreen-guide qr-guide-fs">
+                            <div className="cfs-corner cfs-tl" />
+                            <div className="cfs-corner cfs-tr" />
+                            <div className="cfs-corner cfs-bl" />
+                            <div className="cfs-corner cfs-br" />
+                            <div className="qr-scan-line" />
                         </div>
-                    </>
+
+                        <div className="camera-fullscreen-bottom">
+                            <p className="camera-fullscreen-hint">Hold a QR code steady in the frame…</p>
+                        </div>
+                    </div>
                 )}
             </div>
         );

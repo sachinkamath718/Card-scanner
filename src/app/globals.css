@@ -537,6 +537,115 @@ html, body {
   box-shadow: 0 0 20px var(--accent-glow);
 }
 
+/* ===== FULLSCREEN CAMERA OVERLAY ===== */
+.camera-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+}
+
+.camera-fullscreen-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-fullscreen-top {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.65), transparent);
+}
+
+.camera-fullscreen-label {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+.camera-fullscreen-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  transition: background 0.2s;
+}
+
+.camera-fullscreen-close:hover {
+  background: rgba(255,255,255,0.32);
+}
+
+/* Corner guide brackets */
+.camera-fullscreen-guide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(80vw, 520px);
+  aspect-ratio: 3/2;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.camera-fullscreen-guide.qr-guide-fs {
+  width: min(60vw, 320px);
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.cfs-corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: rgba(255,255,255,0.9);
+  border-style: solid;
+}
+
+.cfs-tl { top: 0; left: 0; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+.cfs-tr { top: 0; right: 0; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+.cfs-bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+.cfs-br { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+
+.camera-fullscreen-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 24px 44px;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  gap: 16px;
+}
+
+.camera-fullscreen-hint {
+  color: rgba(255,255,255,0.8);
+  font-size: 14px;
+  margin: 0;
+  text-align: center;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
 .upload-area {
   border: 2px dashed var(--border);
   border-radius: var(--radius);
