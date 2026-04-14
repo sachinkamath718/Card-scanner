@@ -592,17 +592,9 @@ export default function Scanner({ onExtracted, eventId, onCSVImported }: Scanner
                         <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0 }}>
                             Import multiple prospects at once from a spreadsheet.
                         </p>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="btn btn-secondary btn-sm" onClick={() => setShowColGuide(v => !v)}>
-                                {showColGuide ? 'Hide' : 'View'} Column Guide
-                            </button>
-                            <button className="btn btn-secondary btn-sm" onClick={downloadCSVTemplate}>
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4 }}>
-                                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                                </svg>
-                                Template
-                            </button>
-                        </div>
+                        <button className="btn btn-secondary btn-sm" onClick={() => setShowColGuide(v => !v)}>
+                            {showColGuide ? 'Hide' : 'View'} Column Guide
+                        </button>
                     </div>
 
                     {/* Column guide */}
