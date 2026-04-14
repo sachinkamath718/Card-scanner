@@ -18,6 +18,7 @@ export default function EventDetailPage() {
     const [extracted, setExtracted] = useState<ExtractedContact | null>(null);
     const [frontImageBase64, setFrontImageBase64] = useState('');
     const [backImageBase64, setBackImageBase64] = useState<string | null>(null);
+    const [contactSearch, setContactSearch] = useState('');
 
     useEffect(() => {
         fetchEvent();
@@ -119,7 +120,53 @@ export default function EventDetailPage() {
                             ↻ Refresh
                         </button>
                     </div>
-                    <ContactsTable contacts={contacts} loading={loadingContacts} onDeleted={handleContactDeleted} onDiscussionUpdated={handleDiscussionUpdated} />
+
+                    {/* Contact search bar */}
+                    {!loadingContacts && contacts.length > 0 && (
+                        <div style={{ marginBottom: 16 }}>
+                            <div style={{ position: 'relative', maxWidth: 380 }}>
+                                <svg style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', pointerEvents: 'none' }}
+                                    width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+                                </svg>
+                                <input
+                                    id="search-contacts"
+                                    type="text"
+                                    placeholder="Search by name, company, email…"
+                                    value={contactSearch}
+                                    onChange={e => setContactSearch(e.target.value)}
+                                    style={{
+                                        width: '100%', padding: '8px 32px 8px 34px',
+                                        borderRadius: 8, border: '1.5px solid #e5e7eb',
+                                        fontSize: 13, background: '#fff', color: '#111827',
+                                        outline: 'none', boxSizing: 'border-box',
+                                    }}
+                                    onFocus={e => { e.target.style.borderColor = '#6366f1'; e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.12)'; }}
+                                    onBlur={e => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+                                />
+                                {contactSearch && (
+                                    <button onClick={() => setContactSearch('')}
+                                        style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 2 }}
+                                        aria-label="Clear contact search">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    <ContactsTable
+                        contacts={contactSearch.trim() ? contacts.filter(c => {
+                            const q = contactSearch.trim().toLowerCase();
+                            return [
+                                c.first_name, c.last_name, c.company_name,
+                                c.job_title, c.email, c.phone_number,
+                            ].some(v => (v || '').toLowerCase().includes(q));
+                        }) : contacts}
+                        loading={loadingContacts}
+                        onDeleted={handleContactDeleted}
+                        onDiscussionUpdated={handleDiscussionUpdated}
+                    />
                 </div>
             </div>
         </main>
