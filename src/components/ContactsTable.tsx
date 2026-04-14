@@ -126,28 +126,32 @@ export default function ContactsTable({ contacts, loading, onDeleted, onDiscussi
     return (
         <div className="contacts-table-wrap">
             <style>{`
-                .discussion-cell { position: relative; min-width: 180px; max-width: 260px; }
-                .discussion-cell:hover .discussion-edit-hint { opacity: 1; }
-                .discussion-edit-hint {
-                    opacity: 0;
-                    transition: opacity 0.15s;
-                    position: absolute;
-                    top: 6px; right: 6px;
-                    color: var(--primary, #6366f1);
-                    pointer-events: none;
-                }
+                .discussion-cell { min-width: 180px; max-width: 280px; }
                 .discussion-text {
                     cursor: pointer;
                     border-radius: 6px;
-                    padding: 4px 6px;
-                    min-height: 28px;
+                    padding: 6px 8px;
+                    min-height: 32px;
                     transition: background 0.15s;
                     word-break: break-word;
                     white-space: pre-wrap;
                     font-size: 13px;
                     line-height: 1.5;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 6px;
+                    justify-content: space-between;
                 }
-                .discussion-text:hover { background: rgba(99,102,241,0.08); }
+                .discussion-text:hover { background: rgba(99,102,241,0.1); }
+                .discussion-text:hover .discussion-edit-icon { opacity: 1; }
+                .discussion-edit-icon {
+                    opacity: 0.35;
+                    transition: opacity 0.15s;
+                    flex-shrink: 0;
+                    color: var(--primary, #6366f1);
+                    margin-top: 1px;
+                    cursor: pointer;
+                }
                 .discussion-textarea {
                     width: 100%;
                     min-height: 70px;
@@ -261,19 +265,19 @@ export default function ContactsTable({ contacts, loading, onDeleted, onDiscussi
                                             title="Click to edit discussion"
                                             id={`discussion-cell-${contact.id}`}
                                         >
-                                            {contact.discussion_details
-                                                ? contact.discussion_details
-                                                : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Click to add…</span>
-                                            }
+                                            <span style={{ flex: 1 }}>
+                                                {contact.discussion_details
+                                                    ? contact.discussion_details
+                                                    : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Click to add…</span>
+                                                }
+                                            </span>
+                                            <span className="discussion-edit-icon" aria-label="Edit discussion">
+                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                                                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                                </svg>
+                                            </span>
                                         </div>
-                                    )}
-                                    {!isEditing && !isSaving && (
-                                        <span className="discussion-edit-hint" aria-hidden>
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                                                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                            </svg>
-                                        </span>
                                     )}
                                 </td>
 
