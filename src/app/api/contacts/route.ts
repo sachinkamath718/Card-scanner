@@ -53,6 +53,31 @@ export async function POST(req: NextRequest) {
     }
 }
 
+// PATCH /api/contacts?id=xxx  { discussion_details: string }
+export async function PATCH(req: NextRequest) {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
+
+    try {
+        const body = await req.json();
+        const { discussion_details } = body;
+
+        const { data, error } = await supabase
+            .from('contacts')
+            .update({ discussion_details: discussion_details ?? null })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ data });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Failed to update contact';
+        return NextResponse.json({ error: message }, { status: 500 });
+    }
+}
+
 // DELETE /api/contacts?id=xxx
 export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
