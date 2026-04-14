@@ -7,12 +7,14 @@ import { parseQRCode } from '@/lib/qrParser';
 
 interface ScannerProps {
     onExtracted: (data: ExtractedContact, frontBase64: string, backBase64: string | null) => void;
+    eventId?: string;
+    onCSVImported?: () => void;
 }
 
 type ScanStep = 'idle' | 'scanning-front' | 'front-done' | 'scanning-back' | 'processing';
-type ScanTab = 'camera' | 'upload' | 'qr';
+type ScanTab = 'camera' | 'upload' | 'qr' | 'csv';
 
-export default function Scanner({ onExtracted }: ScannerProps) {
+export default function Scanner({ onExtracted, eventId, onCSVImported }: ScannerProps) {
     const [tab, setTab] = useState<ScanTab>('camera');
     const [step, setStep] = useState<ScanStep>('idle');
     const [cameraActive, setCameraActive] = useState(false);
@@ -27,6 +29,14 @@ export default function Scanner({ onExtracted }: ScannerProps) {
     const [dragOver, setDragOver] = useState(false);
     const [qrResult, setQrResult] = useState<string | null>(null);
     const [qrScanning, setQrScanning] = useState(false);
+    // CSV tab state
+    const [csvDragOver, setCsvDragOver] = useState(false);
+    const [csvRows, setCsvRows] = useState<Record<string, string>[]>([]);
+    const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+    const [csvImporting, setCsvImporting] = useState(false);
+    const [csvResult, setCsvResult] = useState<{ inserted: number } | null>(null);
+    const [showColGuide, setShowColGuide] = useState(false);
+    const csvFileRef = useRef<HTMLInputElement>(null);
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const qrVideoRef = useRef<HTMLVideoElement>(null);
@@ -243,6 +253,87 @@ export default function Scanner({ onExtracted }: ScannerProps) {
     function switchTab(t: ScanTab) {
         setTab(t);
         resetAll();
+        setCsvRows([]);
+        setCsvHeaders([]);
+        setCsvResult(null);
+    }
+
+    // ── CSV helpers ───────────────────────────────────────────────────
+    const CSV_COLUMNS = [
+        { key: 'first_name', label: 'First Name', example: 'Rahul' },
+        { key: 'last_name', label: 'Last Name', example: 'Sharma' },
+        { key: 'company_name', label: 'Company Name', example: 'Acme Corp' },
+        { key: 'job_title', label: 'Job Title', example: 'VP of Engineering' },
+        { key: 'email', label: 'Email', example: 'rahul@acme.com' },
+        { key: 'phone_number', label: 'Phone Number', example: '+91-9876543210' },
+        { key: 'additional_emails', label: 'Additional Emails', example: 'r.sharma@gmail.com' },
+        { key: 'additional_phones', label: 'Additional Phones', example: '+91-8765432109' },
+        { key: 'discussion_details', label: 'Discussion Details', example: 'Met at Day 2 booth' },
+    ];
+
+    function parseCSV(text: string) {
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length < 2) return { headers: [] as string[], rows: [] as Record<string, string>[] };
+        const parseRow = (line: string) => {
+            const res: string[] = []; let cur = ''; let inQ = false;
+            for (const ch of line) {
+                if (ch === '"') { inQ = !inQ; }
+                else if (ch === ',' && !inQ) { res.push(cur.trim()); cur = ''; }
+                else { cur += ch; }
+            }
+            res.push(cur.trim()); return res;
+        };
+        const headers = parseRow(lines[0]).map(h => h.replace(/^"|"$/g, '').trim());
+        const rows = lines.slice(1).map(line => {
+            const vals = parseRow(line);
+            const row: Record<string, string> = {};
+            headers.forEach((h, i) => { row[h] = vals[i] || ''; });
+            return row;
+        }).filter(r => Object.values(r).some(v => v));
+        return { headers, rows };
+    }
+
+    function handleCSVFile(file: File) {
+        if (!file.name.endsWith('.csv') && file.type !== 'text/csv') { toast.error('Please upload a .csv file'); return; }
+        setCsvResult(null);
+        const reader = new FileReader();
+        reader.onload = e => {
+            const { headers, rows } = parseCSV(e.target?.result as string);
+            if (!rows.length) { toast.error('CSV is empty or invalid'); return; }
+            setCsvHeaders(headers); setCsvRows(rows);
+        };
+        reader.readAsText(file);
+    }
+
+    function downloadCSVTemplate() {
+        const header = CSV_COLUMNS.map(c => c.key).join(',');
+        const example = CSV_COLUMNS.map(c => `"${c.example}"`).join(',');
+        const blob = new Blob([`${header}\n${example}\n`], { type: 'text/csv' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = 'contacts_template.csv'; a.click(); URL.revokeObjectURL(a.href);
+    }
+
+    async function handleCSVImport() {
+        if (!csvRows.length || !eventId) return;
+        setCsvImporting(true);
+        try {
+            const res = await fetch('/api/contacts', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ event_id: eventId, rows: csvRows }),
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error);
+            setCsvResult({ inserted: json.inserted });
+            setCsvRows([]); setCsvHeaders([]);
+            toast.success(`${json.inserted} contact${json.inserted !== 1 ? 's' : ''} imported!`);
+            onCSVImported?.();
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : 'Import failed');
+        } finally {
+            setCsvImporting(false);
+            if (csvFileRef.current) csvFileRef.current.value = '';
+        }
     }
 
     // ── Camera view ───────────────────────────────────────────────────
@@ -420,13 +511,22 @@ export default function Scanner({ onExtracted }: ScannerProps) {
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
                         Upload
                     </button>
-                    <button className={`scanner-tab ${(tab as string) === 'qr' ? 'active' : ''}`} onClick={() => switchTab('qr')} id="tab-qr">
+                    <button className={`scanner-tab ${tab === 'qr' ? 'active' : ''}`} onClick={() => switchTab('qr')} id="tab-qr">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" />
                             <rect x="5" y="5" width="3" height="3" fill="currentColor" /><rect x="16" y="5" width="3" height="3" fill="currentColor" /><rect x="5" y="16" width="3" height="3" fill="currentColor" />
                         </svg>
                         QR Code
                     </button>
+                    {eventId && (
+                        <button className={`scanner-tab ${tab === 'csv' ? 'active' : ''}`} onClick={() => switchTab('csv')} id="tab-csv">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/>
+                                <line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>
+                            </svg>
+                            CSV
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -441,12 +541,12 @@ export default function Scanner({ onExtracted }: ScannerProps) {
             )}
 
             {/* Front scan */}
-            {tab !== 'qr' && (step === 'idle' || step === 'scanning-front') && !processing && (
+            {tab !== 'qr' && tab !== 'csv' && (step === 'idle' || step === 'scanning-front') && !processing && (
                 tab === 'camera' ? renderCamera('front') : renderUpload('front')
             )}
 
             {/* Front done — ask about back */}
-            {tab !== 'qr' && step === 'front-done' && !processing && (
+            {tab !== 'qr' && tab !== 'csv' && step === 'front-done' && !processing && (
                 <div className="scan-step-card">
                     <div className="scan-step-card-icon">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
@@ -467,7 +567,7 @@ export default function Scanner({ onExtracted }: ScannerProps) {
             )}
 
             {/* Back scan */}
-            {tab !== 'qr' && step === 'scanning-back' && !processing && (
+            {tab !== 'qr' && tab !== 'csv' && step === 'scanning-back' && !processing && (
                 <div>
                     <div className="scan-back-header">
                         <span style={{ fontWeight: 600, fontSize: 14 }}>Scanning back of card</span>
@@ -478,9 +578,149 @@ export default function Scanner({ onExtracted }: ScannerProps) {
             )}
 
             {/* Reset */}
-            {tab !== 'qr' && (step === 'front-done' || step === 'scanning-back') && (
+            {tab !== 'qr' && tab !== 'csv' && (step === 'front-done' || step === 'scanning-back') && (
                 <div style={{ marginTop: 12, textAlign: 'right' }}>
                     <button className="btn btn-ghost btn-sm" onClick={resetAll} id="btn-reset-scan">✕ Start Over</button>
+                </div>
+            )}
+
+            {/* ── CSV tab ───────────────────────────────────────────── */}
+            {tab === 'csv' && (
+                <div style={{ paddingTop: 8 }}>
+                    {/* Actions row */}
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0 }}>
+                            Import multiple prospects at once from a spreadsheet.
+                        </p>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                            <button className="btn btn-secondary btn-sm" onClick={() => setShowColGuide(v => !v)}>
+                                {showColGuide ? 'Hide' : 'View'} Column Guide
+                            </button>
+                            <button className="btn btn-secondary btn-sm" onClick={downloadCSVTemplate}>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4 }}>
+                                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                Template
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Column guide */}
+                    {showColGuide && (
+                        <div style={{ marginBottom: 20, border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                            <div style={{ background: 'var(--bg-secondary)', padding: '10px 16px', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                Use these exact column headers in your CSV row 1
+                            </div>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                                    <thead>
+                                        <tr>
+                                            {['Column Header', 'Field Name', 'Example'].map(h => (
+                                                <th key={h} style={{ padding: '8px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {CSV_COLUMNS.map(col => (
+                                            <tr key={col.key} style={{ borderBottom: '1px solid var(--border)' }}>
+                                                <td style={{ padding: '8px 14px' }}>
+                                                    <span style={{ fontFamily: 'monospace', fontSize: 12, background: 'rgba(99,102,241,0.08)', color: '#6366f1', padding: '2px 7px', borderRadius: 4, border: '1px solid rgba(99,102,241,0.2)' }}>{col.key}</span>
+                                                </td>
+                                                <td style={{ padding: '8px 14px', color: 'var(--text-primary)' }}>{col.label}</td>
+                                                <td style={{ padding: '8px 14px', color: 'var(--text-muted)', fontStyle: 'italic' }}>{col.example}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Success state */}
+                    {csvResult && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: '14px 18px', marginBottom: 16 }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span style={{ fontSize: 14, color: '#15803d', fontWeight: 500 }}>{csvResult.inserted} contact{csvResult.inserted !== 1 ? 's' : ''} imported successfully.</span>
+                            <button className="btn btn-secondary btn-sm" style={{ marginLeft: 'auto' }} onClick={() => { setCsvResult(null); }}>Import Another</button>
+                        </div>
+                    )}
+
+                    {/* Drop zone */}
+                    {!csvRows.length && !csvResult && (
+                        <div
+                            className={`upload-area${csvDragOver ? ' dragging' : ''}`}
+                            onDragOver={e => { e.preventDefault(); setCsvDragOver(true); }}
+                            onDragLeave={() => setCsvDragOver(false)}
+                            onDrop={e => { e.preventDefault(); setCsvDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleCSVFile(f); }}
+                            onClick={() => csvFileRef.current?.click()}
+                            id="csv-drop-zone"
+                        >
+                            <span className="upload-icon">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/>
+                                    <line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/>
+                                </svg>
+                            </span>
+                            <div className="upload-title">Drop your CSV file here</div>
+                            <div className="upload-subtitle">or click to browse · .csv files only</div>
+                            <input ref={csvFileRef} type="file" accept=".csv,text/csv" style={{ display: 'none' }}
+                                onChange={e => { const f = e.target.files?.[0]; if (f) handleCSVFile(f); }} />
+                        </div>
+                    )}
+
+                    {/* Preview */}
+                    {csvRows.length > 0 && (() => {
+                        const knownKeys = CSV_COLUMNS.map(c => c.key);
+                        const unknownCols = csvHeaders.filter(h => !knownKeys.includes(h));
+                        const matchedCols = csvHeaders.filter(h => knownKeys.includes(h));
+                        return (
+                            <div>
+                                {unknownCols.length > 0 && (
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#b45309', marginBottom: 12 }}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                        <span>Unknown columns will be ignored: <strong>{unknownCols.join(', ')}</strong>. {matchedCols.length} column{matchedCols.length !== 1 ? 's' : ''} matched.</span>
+                                    </div>
+                                )}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+                                    <span style={{ fontSize: 13, fontWeight: 600 }}>Preview <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 12 }}>· {csvRows.length} row{csvRows.length !== 1 ? 's' : ''} · {matchedCols.length} matched columns</span></span>
+                                    <button className="btn btn-ghost btn-sm" onClick={() => { setCsvRows([]); setCsvHeaders([]); if (csvFileRef.current) csvFileRef.current.value = ''; }}>✕ Clear</button>
+                                </div>
+                                <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: 10, maxHeight: 260, overflowY: 'auto', marginBottom: 14 }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                                        <thead>
+                                            <tr>
+                                                <th style={{ padding: '9px 13px', textAlign: 'left', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, position: 'sticky', top: 0 }}>#</th>
+                                                {csvHeaders.map(h => (
+                                                    <th key={h} style={{ padding: '9px 13px', textAlign: 'left', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', position: 'sticky', top: 0, color: knownKeys.includes(h) ? 'var(--text-muted)' : '#b45309' }}>{h}{!knownKeys.includes(h) ? ' ⚠' : ''}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {csvRows.slice(0, 20).map((row, i) => (
+                                                <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                                                    <td style={{ padding: '7px 13px', color: 'var(--text-muted)', fontSize: 11 }}>{i + 1}</td>
+                                                    {csvHeaders.map(h => (
+                                                        <td key={h} style={{ padding: '7px 13px', color: 'var(--text-primary)', whiteSpace: 'nowrap', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }} title={row[h]}>{row[h] || '—'}</td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {csvRows.length > 20 && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10, textAlign: 'right' }}>Showing first 20 of {csvRows.length} rows</p>}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                                    <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Ready to import <strong>{csvRows.length}</strong> contact{csvRows.length !== 1 ? 's' : ''}</span>
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                        <button className="btn btn-ghost btn-sm" onClick={() => { setCsvRows([]); setCsvHeaders([]); }} disabled={csvImporting}>Cancel</button>
+                                        <button className="btn btn-primary" onClick={handleCSVImport} disabled={csvImporting || matchedCols.length === 0} id="btn-csv-import">
+                                            {csvImporting ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> Importing…</> : <>Import {csvRows.length} Contact{csvRows.length !== 1 ? 's' : ''}</>}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
             )}
         </div>
