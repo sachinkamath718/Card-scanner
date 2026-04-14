@@ -157,14 +157,14 @@ export default function ContactsTable({ contacts, loading, onDeleted, onDiscussi
                     min-height: 70px;
                     resize: vertical;
                     border-radius: 6px;
-                    border: 1.5px solid var(--primary, #6366f1);
-                    background: var(--surface, #1e1e2e);
-                    color: inherit;
+                    border: 1.5px solid #6366f1;
+                    background: #ffffff;
+                    color: #111827;
                     font-size: 13px;
                     line-height: 1.5;
                     padding: 6px 8px;
                     outline: none;
-                    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+                    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
                     font-family: inherit;
                     box-sizing: border-box;
                 }
