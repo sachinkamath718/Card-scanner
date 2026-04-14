@@ -67,6 +67,10 @@ export default function EventDetailPage() {
         setContacts(prev => prev.filter(c => c.id !== id));
     }
 
+    function handleDiscussionUpdated(id: string, text: string | null) {
+        setContacts(prev => prev.map(c => c.id === id ? { ...c, discussion_details: text } : c));
+    }
+
     return (
         <main>
             <div className="container" style={{ paddingTop: 32 }}>
@@ -115,7 +119,7 @@ export default function EventDetailPage() {
                             ↻ Refresh
                         </button>
                     </div>
-                    <ContactsTable contacts={contacts} loading={loadingContacts} onDeleted={handleContactDeleted} />
+                    <ContactsTable contacts={contacts} loading={loadingContacts} onDeleted={handleContactDeleted} onDiscussionUpdated={handleDiscussionUpdated} />
                 </div>
             </div>
         </main>

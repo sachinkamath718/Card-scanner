@@ -8,6 +8,7 @@ interface ContactsTableProps {
     contacts: Contact[];
     loading?: boolean;
     onDeleted?: (id: string) => void;
+    onDiscussionUpdated?: (id: string, text: string | null) => void;
 }
 
 function getInitials(c: Contact) {
@@ -36,18 +37,11 @@ function renderMultiValues(primary: string | null, additional: string | null, is
     );
 }
 
-export default function ContactsTable({ contacts: initialContacts, loading, onDeleted }: ContactsTableProps) {
-    const [contacts, setContacts] = useState<Contact[]>(initialContacts);
+export default function ContactsTable({ contacts, loading, onDeleted, onDiscussionUpdated }: ContactsTableProps) {
     const [deletingId, setDeletingId] = useState<string | null>(null);
-    // Inline discussion edit state
     const [editingId, setEditingId] = useState<string | null>(null);
     const [draftText, setDraftText] = useState('');
     const [savingId, setSavingId] = useState<string | null>(null);
-
-    // Sync when parent passes refreshed contacts (e.g. after a new scan)
-    if (initialContacts !== contacts && initialContacts.length !== contacts.length) {
-        setContacts(initialContacts);
-    }
 
     async function handleDelete(id: string, name: string) {
         if (!confirm(`Delete contact "${name}"? This cannot be undone.`)) return;
@@ -57,7 +51,6 @@ export default function ContactsTable({ contacts: initialContacts, loading, onDe
             const json = await res.json();
             if (!res.ok) throw new Error(json.error);
             toast.success('Contact deleted');
-            setContacts(prev => prev.filter(c => c.id !== id));
             onDeleted?.(id);
         } catch (err: unknown) {
             toast.error(err instanceof Error ? err.message : 'Failed to delete');
@@ -77,31 +70,31 @@ export default function ContactsTable({ contacts: initialContacts, loading, onDe
     }
 
     async function saveDiscussion(id: string) {
-        if (savingId) return;
+        // snapshot current text before any state change
+        const textToSave = draftText;
         const original = contacts.find(c => c.id === id)?.discussion_details ?? '';
-        if (draftText === original) { cancelEdit(); return; }
+        if (textToSave === original) { cancelEdit(); return; }
 
-        setSavingId(id);
-        // Optimistic update
-        setContacts(prev => prev.map(c => c.id === id ? { ...c, discussion_details: draftText || null } : c));
+        // Close editor and show saving spinner immediately
         setEditingId(null);
+        setDraftText('');
+        setSavingId(id);
 
         try {
             const res = await fetch(`/api/contacts?id=${id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ discussion_details: draftText || null }),
+                body: JSON.stringify({ discussion_details: textToSave || null }),
             });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error);
+            // Notify parent to update its contacts array
+            onDiscussionUpdated?.(id, textToSave || null);
             toast.success('Discussion saved');
         } catch (err: unknown) {
-            // Rollback on failure
-            setContacts(prev => prev.map(c => c.id === id ? { ...c, discussion_details: original || null } : c));
             toast.error(err instanceof Error ? err.message : 'Failed to save discussion');
         } finally {
             setSavingId(null);
-            setDraftText('');
         }
     }
 
