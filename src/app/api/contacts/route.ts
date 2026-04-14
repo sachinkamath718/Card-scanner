@@ -53,6 +53,40 @@ export async function POST(req: NextRequest) {
     }
 }
 
+// POST /api/contacts?bulk=1  — body: { event_id, rows: Contact[] }
+export async function PUT(req: NextRequest) {
+    try {
+        const body = await req.json();
+        const { event_id, rows } = body as { event_id: string; rows: Record<string, string>[] };
+
+        if (!event_id) return NextResponse.json({ error: 'event_id is required' }, { status: 400 });
+        if (!Array.isArray(rows) || rows.length === 0)
+            return NextResponse.json({ error: 'rows array is required' }, { status: 400 });
+
+        const records = rows.map(r => ({
+            event_id,
+            first_name: r.first_name || null,
+            last_name: r.last_name || null,
+            company_name: r.company_name || null,
+            job_title: r.job_title || null,
+            email: r.email || null,
+            phone_number: r.phone_number || null,
+            additional_emails: r.additional_emails || null,
+            additional_phones: r.additional_phones || null,
+            discussion_details: r.discussion_details || null,
+            raw_image_url: null,
+            back_image_url: null,
+        }));
+
+        const { data, error } = await supabase.from('contacts').insert(records).select();
+        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ data, inserted: data?.length ?? 0 });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Bulk insert failed';
+        return NextResponse.json({ error: message }, { status: 500 });
+    }
+}
+
 // PATCH /api/contacts?id=xxx  { discussion_details: string }
 export async function PATCH(req: NextRequest) {
     const { searchParams } = new URL(req.url);

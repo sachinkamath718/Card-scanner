@@ -7,6 +7,7 @@ import { ExtractedContact } from '@/lib/gemini';
 import Scanner from '@/components/Scanner';
 import ContactForm from '@/components/ContactForm';
 import ContactsTable from '@/components/ContactsTable';
+import CSVUploader from '@/components/CSVUploader';
 
 export default function EventDetailPage() {
     const params = useParams();
@@ -107,6 +108,11 @@ export default function EventDetailPage() {
                         onSaved={handleSaved}
                         onDiscard={handleDiscard}
                     />
+                )}
+
+                {/* CSV Bulk Import */}
+                {!extracted && (
+                    <CSVUploader eventId={eventId} onImported={fetchContacts} />
                 )}
 
                 {/* Contacts Table */}
