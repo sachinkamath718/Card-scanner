@@ -597,32 +597,65 @@ export default function Scanner({ onExtracted, eventId, onCSVImported }: Scanner
                         </button>
                     </div>
 
-                    {/* Column guide */}
+                                        {/* Column guide — horizontal layout, copy-pastable into Excel */}
                     {showColGuide && (
                         <div style={{ marginBottom: 20, border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-                            <div style={{ background: 'var(--bg-secondary)', padding: '10px 16px', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                                Use these exact column headers in your CSV row 1
+                            <div style={{ background: 'var(--bg-secondary)', padding: '10px 16px', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                    Copy row 1 (headers) into Excel, then fill in your data below
+                                </span>
+                                <button
+                                    className="btn btn-secondary btn-sm"
+                                    style={{ fontSize: 11, padding: '3px 10px', whiteSpace: 'nowrap' }}
+                                    onClick={() => {
+                                        const headerRow = CSV_COLUMNS.map(c => c.key).join('\t');
+                                        const exampleRow = CSV_COLUMNS.map(c => c.example).join('\t');
+                                        navigator.clipboard.writeText(`${headerRow}\n${exampleRow}`)
+                                            .then(() => toast.success('Headers + example row copied! Paste into Excel.'))
+                                            .catch(() => toast.error('Copy failed — select manually.'));
+                                    }}
+                                >
+                                    📋 Copy for Excel
+                                </button>
                             </div>
+                            {/* Horizontal table: each column = one Excel column, rows = header key / field name / example */}
                             <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                                    <thead>
-                                        <tr>
-                                            {['Column Header', 'Field Name', 'Example'].map(h => (
-                                                <th key={h} style={{ padding: '8px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                                <table style={{ borderCollapse: 'collapse', fontSize: 12, minWidth: '100%' }}>
+                                    <tbody>
+                                        {/* Row 1 — column key headers (paste as row 1 in Excel) */}
+                                        <tr style={{ background: 'rgba(99,102,241,0.04)' }}>
+                                            <td style={{ padding: '7px 12px', fontWeight: 700, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', whiteSpace: 'nowrap', borderRight: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+                                                Row 1 · Headers
+                                            </td>
+                                            {CSV_COLUMNS.map(col => (
+                                                <td key={col.key} style={{ padding: '7px 12px', whiteSpace: 'nowrap', borderRight: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+                                                    <span style={{ fontFamily: 'monospace', fontSize: 12, background: 'rgba(99,102,241,0.10)', color: '#6366f1', padding: '2px 7px', borderRadius: 4, border: '1px solid rgba(99,102,241,0.25)' }}>{col.key}</span>
+                                                </td>
                                             ))}
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {CSV_COLUMNS.map(col => (
-                                            <tr key={col.key} style={{ borderBottom: '1px solid var(--border)' }}>
-                                                <td style={{ padding: '8px 14px' }}>
-                                                    <span style={{ fontFamily: 'monospace', fontSize: 12, background: 'rgba(99,102,241,0.08)', color: '#6366f1', padding: '2px 7px', borderRadius: 4, border: '1px solid rgba(99,102,241,0.2)' }}>{col.key}</span>
+                                        {/* Row 2 — friendly label */}
+                                        <tr>
+                                            <td style={{ padding: '6px 12px', fontWeight: 700, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', whiteSpace: 'nowrap', borderRight: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+                                                Field Name
+                                            </td>
+                                            {CSV_COLUMNS.map(col => (
+                                                <td key={col.key} style={{ padding: '6px 12px', color: 'var(--text-secondary)', whiteSpace: 'nowrap', fontSize: 12, borderRight: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+                                                    {col.label}
                                                 </td>
-                                                <td style={{ padding: '8px 14px', color: 'var(--text-primary)' }}>{col.label}</td>
-                                                <td style={{ padding: '8px 14px', color: 'var(--text-muted)', fontStyle: 'italic' }}>{col.example}</td>
-                                            </tr>
-                                        ))}
+                                            ))}
+                                        </tr>
+                                        {/* Row 3 — example values */}
+                                        <tr>
+                                            <td style={{ padding: '6px 12px', fontWeight: 700, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', whiteSpace: 'nowrap', borderRight: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+                                                Row 2 · Example
+                                            </td>
+                                            {CSV_COLUMNS.map(col => (
+                                                <td key={col.key} style={{ padding: '6px 12px', color: 'var(--text-muted)', fontStyle: 'italic', whiteSpace: 'nowrap', fontSize: 12, borderRight: '1px solid var(--border)' }}>
+                                                    {col.example}
+                                                </td>
+                                            ))}
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
