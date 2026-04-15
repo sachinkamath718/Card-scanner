@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
-  title: 'CardScan — Smart Business Card Scanner',
+  title: 'ZeCardScanner — Smart Business Card Scanner',
   description: 'Scan and manage business cards at events. Capture contact details instantly and sync everything to your database.',
 };
 
@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </svg>
               </div>
               <div>
-                <div className="navbar-title">CardScan</div>
+                <div className="navbar-title">ZeCardScanner</div>
                 <div className="navbar-subtitle">Smart Business Card Scanner</div>
               </div>
             </a>

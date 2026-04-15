@@ -430,13 +430,14 @@ html, body {
   background: var(--bg-secondary);
   border-radius: 12px;
   margin-bottom: 28px;
-  width: fit-content;
+  width: 100%;
 }
 
 .scanner-tab {
-  padding: 10px 20px;
+  flex: 1;
+  padding: 10px 8px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -445,7 +446,10 @@ html, body {
   color: var(--text-muted);
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .scanner-tab.active {
@@ -456,6 +460,18 @@ html, body {
 
 .scanner-tab:hover:not(.active) {
   color: var(--text-primary);
+}
+
+@media (max-width: 400px) {
+  .scanner-tab {
+    font-size: 11px;
+    gap: 4px;
+    padding: 9px 4px;
+  }
+  .scanner-tab svg {
+    width: 13px;
+    height: 13px;
+  }
 }
 
 .camera-container {
